@@ -1,0 +1,4 @@
+sensor_msgs/Image input_rgb
+---
+std_msgs/Float64MultiArray mtcnn_ptscoords
+std_msgs/Float64MultiArray mtcnn_ptsbbox
