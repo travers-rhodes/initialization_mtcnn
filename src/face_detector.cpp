@@ -1,6 +1,8 @@
 #include "face_detector.hpp"
 #include "helpers.hpp"
 
+// TSR: it looks to me like this code was copied from https://github.com/golunovas/mtcnn-cpp/blob/master/face_detector.cpp
+
 namespace mtcnn {
 
 const std::string P_NET_PROTO = "/det1.prototxt";

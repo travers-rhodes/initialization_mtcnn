@@ -55,16 +55,9 @@ void pixelTo3DPoint(const sensor_msgs::PointCloud2 pCloud, const int u, const in
 
 }
 
-mtcnn::FaceDetector fd("/home/candeias/code/mtcnn-cpp/model/", //modelDir
-  0.6f, //pThreshold 
-  0.7f, //rThreshold 
-  0.7f, //oThreshold 
-  true, //useLNet 
-  false, //useGPU 
-  0); // deviceID
-
 bool mtcnnRgbService(initialization_mtcnn::MTCNNSrvMsg::Request &req,
-       initialization_mtcnn::MTCNNSrvMsg::Response &res)
+       initialization_mtcnn::MTCNNSrvMsg::Response &res,
+       mtcnn::FaceDetector &fd)
 {
   sensor_msgs::Image rgb_image;
   rgb_image = req.input_rgb;
@@ -136,7 +129,8 @@ bool mtcnnRgbService(initialization_mtcnn::MTCNNSrvMsg::Request &req,
 }
 
 bool passThroughMtcnnServiceHandle(initialization_mtcnn::PointCloudMTCNNSrvMsg::Request &req,
-        initialization_mtcnn::PointCloudMTCNNSrvMsg::Response &res)
+       initialization_mtcnn::PointCloudMTCNNSrvMsg::Response &res,
+       mtcnn::FaceDetector &fd)
 {
 
     sensor_msgs::PointCloud2 pc;
@@ -214,7 +208,8 @@ bool passThroughMtcnnServiceHandle(initialization_mtcnn::PointCloudMTCNNSrvMsg::
 }
 
 bool initializationServiceHandle(initialization_mtcnn::InitializationSrvMsg::Request &req,
-        initialization_mtcnn::InitializationSrvMsg::Response &res)
+       initialization_mtcnn::InitializationSrvMsg::Response &res,
+       mtcnn::FaceDetector &fd)
 {
   // get point cloud and convert it to pcl format
   boost::shared_ptr<sensor_msgs::PointCloud2 const> msg_sharedptr; 
@@ -301,15 +296,40 @@ int main(int argc, char **argv)
   ros::init(argc,argv,"initialization_mtcnn_server");
   ros::NodeHandle n;
 
-  ros::ServiceServer service_initialization = n.advertiseService("initialization_mtcnn",
-          initializationServiceHandle);
+  std::string mtcnnModelPath;
+  if (!ros::param::get("~mtcnn_model_path", mtcnnModelPath))
+  {
+    ROS_ERROR_STREAM("Could not retrieve mtcnn model path. Please set the private mtcnn_model_path rosparam");
+    return 0;
+  }
+
+  mtcnn::FaceDetector fd(mtcnnModelPath, //modelDir
+    0.6f, //pThreshold 
+    0.7f, //rThreshold 
+    0.7f, //oThreshold 
+    true, //useLNet 
+    false, //useGPU 
+    0); // deviceID
+
+  ros::ServiceServer service_initialization = n.advertiseService
+    <initialization_mtcnn::InitializationSrvMsg::Request, 
+      initialization_mtcnn::InitializationSrvMsg::Response>
+    ("initialization_mtcnn",
+        boost::bind(initializationServiceHandle, _1, _2, fd));
   ROS_INFO("Initialization Service Ready");
 	
-  ros::ServiceServer service_mtcnn = n.advertiseService("mtcnn_pc2",
-            passThroughMtcnnServiceHandle);
+  ros::ServiceServer service_mtcnn = n.advertiseService
+     <initialization_mtcnn::PointCloudMTCNNSrvMsg::Request,
+       initialization_mtcnn::PointCloudMTCNNSrvMsg::Response>
+     ("mtcnn_pc2",
+         boost::bind(passThroughMtcnnServiceHandle, _1, _2, fd));
   ROS_INFO("MTCNN Point Cloud 2 service ready");
 
-  ros::ServiceServer service_rgb_mtcnn = n.advertiseService("mtcnn_rgb", mtcnnRgbService );
+  ros::ServiceServer service_rgb_mtcnn = n.advertiseService
+     <initialization_mtcnn::MTCNNSrvMsg::Request,
+       initialization_mtcnn::MTCNNSrvMsg::Response>
+     ("mtcnn_rgb", 
+         boost::bind(mtcnnRgbService, _1, _2, fd));
   ROS_INFO("MTCNN RGB service ready");
 
   ros::spin();
