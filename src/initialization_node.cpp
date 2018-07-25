@@ -13,9 +13,9 @@
 #include <boost/shared_ptr.hpp>
 #include <geometry_msgs/Point.h>
 #include <sensor_msgs/Image.h>
-#include <opencv2/core.hpp>
-#include <opencv2/imgproc.hpp>
-#include <opencv2/highgui.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
 #include <std_msgs/Float64MultiArray.h>
