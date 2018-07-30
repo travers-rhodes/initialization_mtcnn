@@ -1,2 +1,3 @@
 ---
 geometry_msgs/Point initial_translation
+bool success

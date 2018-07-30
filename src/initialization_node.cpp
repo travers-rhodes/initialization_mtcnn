@@ -220,7 +220,11 @@ bool initializationServiceHandle(initialization_mtcnn::InitializationSrvMsg::Req
   if (msg_sharedptr == NULL)
   {
     ROS_INFO("No point Cloud");
-    return false;
+    // failing services cause the whole matlab code to fail
+    // so instead we have the service return successfully
+    // but we mark the response as a failure
+    res.success = false;
+    return true;
   }
   else
   {
@@ -237,14 +241,22 @@ bool initializationServiceHandle(initialization_mtcnn::InitializationSrvMsg::Req
   catch (cv_bridge::Exception& e)
   {
     ROS_ERROR("cv_bridge exception: %s", e.what());
-    return false;
+    // failing services cause the whole matlab code to fail
+    // so instead we have the service return successfully
+    // but we mark the response as a failure
+    res.success = false;
+    return true;
   }
   
   std::vector<mtcnn::Face> faces = fd.detect(cv_ptr->image, 40.f, 0.709f);
   if(faces.size()< 1)
   {
     ROS_ERROR("No face detected");
-    return false;		
+    // failing services cause the whole matlab code to fail
+    // so instead we have the service return successfully
+    // but we mark the response as a failure
+    res.success = false;
+    return true;
   }
   
   /*
@@ -280,7 +292,11 @@ bool initializationServiceHandle(initialization_mtcnn::InitializationSrvMsg::Req
   if(p_x == 0)
   { 
     ROS_ERROR("No points");
-    return false;
+    // failing services cause the whole matlab code to fail
+    // so instead we have the service return successfully
+    // but we mark the response as a failure
+    res.success = false;
+    return true;
   }
   
   geometry_msgs::Point point;
@@ -288,6 +304,7 @@ bool initializationServiceHandle(initialization_mtcnn::InitializationSrvMsg::Req
   point.y = p_y / 5.0;
   point.z = p_z / 5.0;
   res.initial_translation = point;
+  res.success = true;
   return true;	
 }
 
